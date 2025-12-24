@@ -118,12 +118,20 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
                     # Handle images (PNG, JPEG, SVG)
                     if 'image/png' in data:
                         image_data = data['image/png']
+                        # Remove any whitespace/newlines from base64 data
+                        if isinstance(image_data, list):
+                            image_data = ''.join(image_data)
+                        image_data = image_data.strip().replace('\n', '').replace('\r', '')
                         # Embed as base64 data URI
                         markdown_lines.append(f"![output](data:image/png;base64,{image_data})")
                         markdown_lines.append("")
 
                     elif 'image/jpeg' in data:
                         image_data = data['image/jpeg']
+                        # Remove any whitespace/newlines from base64 data
+                        if isinstance(image_data, list):
+                            image_data = ''.join(image_data)
+                        image_data = image_data.strip().replace('\n', '').replace('\r', '')
                         # Embed as base64 data URI
                         markdown_lines.append(f"![output](data:image/jpeg;base64,{image_data})")
                         markdown_lines.append("")
