@@ -15,9 +15,10 @@ from pathlib import Path
 
 
 def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
-                                 categories="coding", tags=None, embed_images=True):
+                                 categories="coding", tags=None):
     """
     Convert a Jupyter notebook to Jekyll Markdown format.
+    All images are embedded as base64-encoded data URIs for a single-file solution.
 
     Args:
         notebook_path (str): Path to the .ipynb file
@@ -25,7 +26,6 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
         title (str): Post title (optional, defaults to filename)
         categories (str): Post categories (default: "coding")
         tags (list): Post tags (default: ["python", "jupyter"])
-        embed_images (bool): If True, embed images as base64; if False, save as separate files
 
     Returns:
         str: Path to the generated Markdown file
@@ -51,11 +51,6 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
     else:
         output_path = Path(output_path)
 
-    # Prepare image directory if not embedding
-    if not embed_images:
-        image_dir = Path(__file__).parent / "assets" / "images" / notebook_name
-        image_dir.mkdir(parents=True, exist_ok=True)
-
     # Start building the markdown content
     markdown_lines = []
 
@@ -71,8 +66,6 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
     markdown_lines.append("")
 
     # Process each cell
-    image_counter = 0
-
     for cell_idx, cell in enumerate(notebook.get('cells', [])):
         cell_type = cell.get('cell_type', '')
 
@@ -123,40 +116,14 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
                     # Handle images (PNG, JPEG, SVG)
                     if 'image/png' in data:
                         image_data = data['image/png']
-                        if embed_images:
-                            # Embed as base64 data URI
-                            markdown_lines.append(f"![output](data:image/png;base64,{image_data})")
-                        else:
-                            # Save as separate file
-                            image_counter += 1
-                            image_filename = f"output_{cell_idx}_{image_counter}.png"
-                            image_path = image_dir / image_filename
-
-                            # Decode and save image
-                            image_bytes = base64.b64decode(image_data)
-                            with open(image_path, 'wb') as img_file:
-                                img_file.write(image_bytes)
-
-                            # Reference the image
-                            relative_path = f"/assets/images/{notebook_name}/{image_filename}"
-                            markdown_lines.append(f"![output]({relative_path})")
+                        # Embed as base64 data URI
+                        markdown_lines.append(f"![output](data:image/png;base64,{image_data})")
                         markdown_lines.append("")
 
                     elif 'image/jpeg' in data:
                         image_data = data['image/jpeg']
-                        if embed_images:
-                            markdown_lines.append(f"![output](data:image/jpeg;base64,{image_data})")
-                        else:
-                            image_counter += 1
-                            image_filename = f"output_{cell_idx}_{image_counter}.jpg"
-                            image_path = image_dir / image_filename
-
-                            image_bytes = base64.b64decode(image_data)
-                            with open(image_path, 'wb') as img_file:
-                                img_file.write(image_bytes)
-
-                            relative_path = f"/assets/images/{notebook_name}/{image_filename}"
-                            markdown_lines.append(f"![output]({relative_path})")
+                        # Embed as base64 data URI
+                        markdown_lines.append(f"![output](data:image/jpeg;base64,{image_data})")
                         markdown_lines.append("")
 
                     elif 'image/svg+xml' in data:
@@ -201,15 +168,14 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
         f.write(markdown_content)
 
     print(f"✓ Converted notebook to: {output_path}")
-    if not embed_images and image_counter > 0:
-        print(f"✓ Saved {image_counter} images to: {image_dir}")
+    print(f"✓ All images embedded as base64 - ready to upload!")
 
     return str(output_path)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Convert Jupyter notebooks to Jekyll Markdown format'
+        description='Convert Jupyter notebooks to Jekyll Markdown format (images embedded as base64)'
     )
     parser.add_argument('notebook', help='Path to the .ipynb file')
     parser.add_argument('-o', '--output', help='Output path for the .md file')
@@ -217,8 +183,6 @@ def main():
     parser.add_argument('-c', '--categories', default='coding', help='Post categories')
     parser.add_argument('--tags', nargs='+', default=['python', 'jupyter'],
                        help='Post tags')
-    parser.add_argument('--no-embed', action='store_true',
-                       help='Save images as separate files instead of embedding')
 
     args = parser.parse_args()
 
@@ -227,8 +191,7 @@ def main():
         output_path=args.output,
         title=args.title,
         categories=args.categories,
-        tags=args.tags,
-        embed_images=not args.no_embed
+        tags=args.tags
     )
 
 
