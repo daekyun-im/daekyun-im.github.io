@@ -123,6 +123,27 @@ python convert_notebook.py ../notebooks/data_analysis.ipynb
 
 **중요:** 어디에 있는 파일이든 변환 가능하며, 생성된 .md 파일은 항상 **현재 작업 디렉토리**에 원본 파일명과 동일한 이름으로 저장됩니다!
 
+## 이미지 검증 및 미리보기
+
+변환된 .md 파일의 이미지가 올바르게 인코딩되었는지 확인하려면:
+
+```bash
+# 기본 검증
+python validate_markdown.py your_notebook.md
+
+# 검증 + HTML 미리보기 생성
+python validate_markdown.py your_notebook.md --preview
+```
+
+검증 스크립트는:
+- ✅ base64 데이터에 줄바꿈 문자가 있는지 확인
+- ✅ base64 데이터가 유효한지 디코딩 테스트
+- ✅ PNG/JPEG 헤더가 올바른지 검증
+- ✅ 각 이미지의 크기 표시
+- ✅ HTML 미리보기 파일 생성 (--preview 옵션)
+
+**HTML 미리보기**를 브라우저에서 열어서 이미지가 정상적으로 렌더링되는지 확인할 수 있습니다!
+
 ## 지원하는 출력 형식
 
 - ✅ 텍스트 출력 (print 문)
