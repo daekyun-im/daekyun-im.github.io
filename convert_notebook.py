@@ -51,6 +51,9 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
     else:
         output_path = Path(output_path)
 
+    # Create output directory if it doesn't exist
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
     # Start building the markdown content
     markdown_lines = []
 
