@@ -24,6 +24,7 @@ python convert_notebook.py your_notebook.ipynb
 - `your_notebook.ipynb`를 읽어서
 - **현재 디렉토리**에 `your_notebook.md` 파일을 생성합니다
 - **모든 그래프 이미지를 base64로 인코딩하여 .md 파일에 포함합니다**
+- **자동으로 이미지 검증을 수행하여 결과를 표시합니다**
 
 ### 2. 제목과 카테고리 지정
 
@@ -44,7 +45,7 @@ python convert_notebook.py your_notebook.ipynb -o custom_path.md
 
 ```
 python convert_notebook.py [-h] [-o OUTPUT] [-t TITLE] [-c CATEGORIES]
-                           [--tags TAGS [TAGS ...]] notebook
+                           [--tags TAGS [TAGS ...]] [--no-validate] notebook
 
 필수 인자:
   notebook              변환할 .ipynb 파일 경로
@@ -59,7 +60,32 @@ python convert_notebook.py [-h] [-o OUTPUT] [-t TITLE] [-c CATEGORIES]
                         포스트 카테고리 (기본값: coding)
   --tags TAGS [TAGS ...]
                         포스트 태그 (기본값: python jupyter)
+  --no-validate         이미지 검증 건너뛰기
 ```
+
+## 자동 이미지 검증
+
+변환 시 자동으로 이미지 검증이 수행됩니다:
+
+```
+✓ Converted notebook to: my_analysis.md
+
+============================================================
+IMAGE VALIDATION SUMMARY
+============================================================
+Total images: 3
+Valid images: 3/3
+Total size: 145.32 KB (0.14 MB)
+
+✓ All images validated successfully!
+============================================================
+```
+
+검증 항목:
+- ✅ Base64 데이터 유효성
+- ✅ 이미지 헤더 (PNG/JPEG) 검증
+- ✅ 줄바꿈 문자 확인
+- ✅ 이미지 크기 계산
 
 ## 예제
 

@@ -10,12 +10,59 @@ import json
 import base64
 import argparse
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 
 
+def validate_base64_image(image_data, img_type):
+    """
+    Validate a base64-encoded image.
+
+    Args:
+        image_data (str): Base64-encoded image data
+        img_type (str): Image type (png, jpeg, etc.)
+
+    Returns:
+        dict: Validation results
+    """
+    result = {
+        'valid': True,
+        'warnings': [],
+        'size_kb': 0
+    }
+
+    # Check for issues
+    if '\n' in image_data or '\r' in image_data:
+        result['warnings'].append("Base64 data contains newlines (will be removed)")
+
+    if ' ' in image_data:
+        result['warnings'].append("Base64 data contains spaces (will be removed)")
+
+    # Try to decode
+    try:
+        clean_data = image_data.strip().replace('\n', '').replace('\r', '').replace(' ', '')
+        decoded = base64.b64decode(clean_data)
+        result['size_kb'] = len(decoded) / 1024
+
+        # Validate image header
+        if img_type == 'png':
+            if decoded[:8] != b'\x89PNG\r\n\x1a\n':
+                result['valid'] = False
+                result['warnings'].append("Invalid PNG header")
+        elif img_type in ['jpeg', 'jpg']:
+            if decoded[:2] != b'\xff\xd8':
+                result['valid'] = False
+                result['warnings'].append("Invalid JPEG header")
+    except Exception as e:
+        result['valid'] = False
+        result['warnings'].append(f"Failed to decode base64: {str(e)}")
+
+    return result
+
+
 def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
-                                 categories="coding", tags=None):
+                                 categories="coding", tags=None, validate=True):
     """
     Convert a Jupyter notebook to Jekyll Markdown format.
     All images are embedded as base64-encoded data URIs for a single-file solution.
@@ -26,6 +73,7 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
         title (str): Post title (optional, defaults to filename)
         categories (str): Post categories (default: "coding")
         tags (list): Post tags (default: ["python", "jupyter"])
+        validate (bool): Validate images during conversion (default: True)
 
     Returns:
         str: Path to the generated Markdown file
@@ -55,6 +103,10 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
 
     # Start building the markdown content
     markdown_lines = []
+
+    # Track image validation results
+    image_count = 0
+    validation_results = []
 
     # Add Jekyll front matter
     markdown_lines.append("---")
@@ -121,6 +173,17 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
                         # Remove any whitespace/newlines from base64 data
                         if isinstance(image_data, list):
                             image_data = ''.join(image_data)
+
+                        # Validate before cleaning
+                        if validate:
+                            image_count += 1
+                            validation = validate_base64_image(image_data, 'png')
+                            validation_results.append({
+                                'index': image_count,
+                                'type': 'png',
+                                **validation
+                            })
+
                         image_data = image_data.strip().replace('\n', '').replace('\r', '')
                         # Embed as base64 data URI
                         markdown_lines.append(f"![output](data:image/png;base64,{image_data})")
@@ -131,6 +194,17 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
                         # Remove any whitespace/newlines from base64 data
                         if isinstance(image_data, list):
                             image_data = ''.join(image_data)
+
+                        # Validate before cleaning
+                        if validate:
+                            image_count += 1
+                            validation = validate_base64_image(image_data, 'jpeg')
+                            validation_results.append({
+                                'index': image_count,
+                                'type': 'jpeg',
+                                **validation
+                            })
+
                         image_data = image_data.strip().replace('\n', '').replace('\r', '')
                         # Embed as base64 data URI
                         markdown_lines.append(f"![output](data:image/jpeg;base64,{image_data})")
@@ -178,7 +252,41 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
         f.write(markdown_content)
 
     print(f"✓ Converted notebook to: {output_path}")
-    print(f"✓ All images embedded as base64 - ready to upload!")
+
+    # Display validation results
+    if validate and validation_results:
+        print(f"\n{'='*60}")
+        print(f"IMAGE VALIDATION SUMMARY")
+        print(f"{'='*60}")
+        print(f"Total images: {len(validation_results)}")
+
+        valid_count = sum(1 for r in validation_results if r['valid'])
+        total_size = sum(r['size_kb'] for r in validation_results)
+
+        print(f"Valid images: {valid_count}/{len(validation_results)}")
+        print(f"Total size: {total_size:.2f} KB ({total_size/1024:.2f} MB)")
+
+        # Show warnings
+        warnings_found = [r for r in validation_results if r['warnings']]
+        if warnings_found:
+            print(f"\n⚠️  Warnings found in {len(warnings_found)} image(s):")
+            for result in warnings_found:
+                print(f"\n  Image {result['index']} ({result['type']}):")
+                for warning in result['warnings']:
+                    print(f"    - {warning}")
+
+        # Show invalid images
+        invalid = [r for r in validation_results if not r['valid']]
+        if invalid:
+            print(f"\n❌ Invalid images: {len(invalid)}")
+            for result in invalid:
+                print(f"  - Image {result['index']} ({result['type']})")
+        else:
+            print(f"\n✓ All images validated successfully!")
+
+        print(f"{'='*60}\n")
+    else:
+        print(f"✓ All images embedded as base64 - ready to upload!")
 
     return str(output_path)
 
@@ -193,6 +301,8 @@ def main():
     parser.add_argument('-c', '--categories', default='coding', help='Post categories')
     parser.add_argument('--tags', nargs='+', default=['python', 'jupyter'],
                        help='Post tags')
+    parser.add_argument('--no-validate', action='store_true',
+                       help='Skip image validation during conversion')
 
     args = parser.parse_args()
 
@@ -201,7 +311,8 @@ def main():
         output_path=args.output,
         title=args.title,
         categories=args.categories,
-        tags=args.tags
+        tags=args.tags,
+        validate=not args.no_validate
     )
 
 
