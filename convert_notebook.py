@@ -44,10 +44,10 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
 
     # Prepare output path
     if output_path is None:
-        # Use Jekyll's _posts directory with date prefix
+        # Use current working directory with date prefix
         today = datetime.now().strftime('%Y-%m-%d')
         output_filename = f"{today}-{notebook_name}.md"
-        output_path = Path(__file__).parent / "_posts" / output_filename
+        output_path = Path.cwd() / output_filename
     else:
         output_path = Path(output_path)
 
