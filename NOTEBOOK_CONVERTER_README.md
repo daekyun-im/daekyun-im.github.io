@@ -133,6 +133,12 @@ python validate_markdown.py your_notebook.md
 
 # 검증 + HTML 미리보기 생성
 python validate_markdown.py your_notebook.md --preview
+
+# 검증 + 상세 디버그 리포트 생성 (문제 발생 시)
+python validate_markdown.py your_notebook.md --debug
+
+# 원본 notebook도 함께 분석
+python validate_markdown.py your_notebook.md --debug --notebook your_notebook.ipynb
 ```
 
 검증 스크립트는:
@@ -141,8 +147,24 @@ python validate_markdown.py your_notebook.md --preview
 - ✅ PNG/JPEG 헤더가 올바른지 검증
 - ✅ 각 이미지의 크기 표시
 - ✅ HTML 미리보기 파일 생성 (--preview 옵션)
+- ✅ 상세 디버그 리포트 생성 (--debug 옵션)
 
-**HTML 미리보기**를 브라우저에서 열어서 이미지가 정상적으로 렌더링되는지 확인할 수 있습니다!
+### 문제 발생 시 디버그 리포트 생성
+
+이미지가 깨져 보이면 `--debug` 옵션으로 자동 진단 리포트를 생성하세요:
+
+```bash
+python validate_markdown.py my_analysis.md --debug --notebook my_analysis.ipynb
+```
+
+생성된 `debug_report_YYYYMMDD_HHMMSS.txt` 파일에는:
+- 시스템 정보 (OS, Python 버전)
+- 파일 정보 (크기, 경로)
+- 각 이미지의 상세 분석 (base64 길이, 줄바꿈 여부, 디코딩 가능 여부)
+- 원본 notebook의 이미지 구조 분석
+- 문제 보고용 템플릿
+
+**이 리포트 파일을 공유하면 문제를 빠르게 해결할 수 있습니다!**
 
 ## 지원하는 출력 형식
 
