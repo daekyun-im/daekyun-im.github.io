@@ -44,9 +44,8 @@ def convert_notebook_to_markdown(notebook_path, output_path=None, title=None,
 
     # Prepare output path
     if output_path is None:
-        # Use current working directory with date prefix
-        today = datetime.now().strftime('%Y-%m-%d')
-        output_filename = f"{today}-{notebook_name}.md"
+        # Use current working directory with same filename (just .md extension)
+        output_filename = f"{notebook_name}.md"
         output_path = Path.cwd() / output_filename
     else:
         output_path = Path(output_path)

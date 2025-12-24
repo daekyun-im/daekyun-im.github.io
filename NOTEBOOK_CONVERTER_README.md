@@ -22,7 +22,7 @@ python convert_notebook.py your_notebook.ipynb
 
 이 명령어는:
 - `your_notebook.ipynb`를 읽어서
-- `_posts/2025-12-24-your_notebook.md` 파일을 생성합니다
+- **현재 디렉토리**에 `your_notebook.md` 파일을 생성합니다
 - **모든 그래프 이미지를 base64로 인코딩하여 .md 파일에 포함합니다**
 
 ### 2. 제목과 카테고리 지정
@@ -79,6 +79,8 @@ python convert_notebook.py visualization.ipynb \
     -t "matplotlib과 seaborn으로 데이터 시각화하기" \
     -c "data-visualization" \
     --tags python matplotlib seaborn
+
+# 결과: visualization.md 파일 생성
 ```
 
 ## 변환 결과
@@ -107,6 +109,20 @@ plt.show()
 ![output](data:image/png;base64,iVBORw0KGgoAAAANS...)
 ```
 
+## 다른 폴더의 파일 변환
+
+```bash
+# Downloads 폴더의 notebook 변환
+python convert_notebook.py ~/Downloads/titanic_analysis.ipynb
+# 결과: 현재 디렉토리에 titanic_analysis.md 생성
+
+# 다른 폴더의 notebook 변환
+python convert_notebook.py ../notebooks/data_analysis.ipynb
+# 결과: 현재 디렉토리에 data_analysis.ipynb 이름 그대로 data_analysis.md 생성
+```
+
+**중요:** 어디에 있는 파일이든 변환 가능하며, 생성된 .md 파일은 항상 **현재 작업 디렉토리**에 원본 파일명과 동일한 이름으로 저장됩니다!
+
 ## 지원하는 출력 형식
 
 - ✅ 텍스트 출력 (print 문)
@@ -122,11 +138,17 @@ plt.show()
 변환 후 GitHub에 push하려면:
 
 ```bash
-# 변환
-python convert_notebook.py my_notebook.ipynb
+# 블로그 레포지토리의 _posts 디렉토리로 이동
+cd /path/to/your-blog/_posts
+
+# 변환 (현재 디렉토리에 .md 파일 생성)
+python /path/to/convert_notebook.py /path/to/notebook.ipynb
+
+# 또는 스크립트가 PATH에 있다면
+python convert_notebook.py ~/Downloads/my_notebook.ipynb
 
 # Git에 추가 및 커밋 (하나의 .md 파일만!)
-git add _posts/*.md
+git add *.md
 git commit -m "Add: Jupyter notebook post"
 git push
 ```
